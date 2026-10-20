@@ -97,14 +97,37 @@ duracion s1 s2 =
 
 -- B1
 promedioSobreUmbral :: Double -> [Double] -> Maybe Double
-promedioSobreUmbral = undefined
+promedioSobreUmbral umbral xs =
+  let (s, c) = foldr (\x (accS, accC) ->
+                        if x > umbral
+                          then (accS + x, accC + (1 :: Int))
+                          else (accS, accC)
+                     ) (0.0, 0 :: Int) xs
+  in if c == 0
+       then Nothing
+       else Just (s / fromIntegral c)
 
 -- B2
 movimientosCaballo :: (Int, Int) -> [(Int, Int)]
-movimientosCaballo = undefined
+movimientosCaballo (f, c) =
+  [ (f', c')
+  | (df, dc) <- [ (-2, -1), (-2, 1)
+                , (-1, -2), (-1, 2)
+                , ( 1, -2), ( 1, 2)
+                , ( 2, -1), ( 2, 1)
+                ]
+  , let f' = f + df
+  , let c' = c + dc
+  , 1 <= f' && f' <= 8
+  , 1 <= c' && c' <= 8
+  ]
 
 enDosSaltos :: (Int, Int) -> Int
-enDosSaltos = undefined
+enDosSaltos pos =
+  let salto1    = movimientosCaballo pos
+      dosSaltos = [ p2 | p1 <- salto1, p2 <- movimientosCaballo p1 ]
+      sinRep    = foldr (\x acc -> if x `elem` acc then acc else x : acc) [] dosSaltos
+  in length sinRep
 
 -- B3
 miMap :: (a -> b) -> [a] -> [b]
