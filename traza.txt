@@ -1,0 +1,137 @@
+=====================================================================
+CI-3661 — Laboratorio de Lenguajes de Programación I (Sep–Dic 2026)
+Problema 7: Evaluación por sustitución
+Nombre: Nadheska García 
+Carnet: 19-10054
+=====================================================================
+
+(foldr.1)  foldr _ z []     = z
+(foldr.2)  foldr f z (x:xs) = f x (foldr f z xs)
+
+(foldl.1)  foldl _ z []     = z
+(foldl.2)  foldl f z (x:xs) = foldl f (f z x) xs
+
+(miFoldl)  miFoldl f z xs   = foldr (\x k acc -> k (f acc x)) id xs z
+(id.1)     id w             = w
+(a) Reducción de foldr (-) 0 d
+
+Forma general con d = [d1, d2, d3, d4]:
+
+foldr (-) 0 [d1, d2, d3, d4]
+= { por (foldr.2) }
+d1 - foldr (-) 0 [d2, d3, d4]
+= { por (foldr.2) }
+d1 - (d2 - foldr (-) 0 [d3, d4])
+= { por (foldr.2) }
+d1 - (d2 - (d3 - foldr (-) 0 [d4]))
+= { por (foldr.2) }
+d1 - (d2 - (d3 - (d4 - foldr (-) 0 [])))
+= { por (foldr.1) }
+d1 - (d2 - (d3 - (d4 - 0)))
+
+Sustitución con carnet 19-10054 (d = [0, 0, 5, 4]):
+
+foldr (-) 0 [0, 0, 5, 4]
+= 0 - foldr (-) 0 [0, 5, 4]
+= 0 - (0 - foldr (-) 0 [5, 4])
+= 0 - (0 - (5 - foldr (-) 0 [4]))
+= 0 - (0 - (5 - (4 - foldr (-) 0 [])))
+= 0 - (0 - (5 - (4 - 0)))
+= 0 - (0 - (5 - 4))
+= 0 - (0 - 1)
+= 0 - (-1)
+= 1
+(b) Reducción de foldl (-) 0 d
+
+Forma general con d = [d1, d2, d3, d4]:
+
+foldl (-) 0 [d1, d2, d3, d4]
+= { por (foldl.2) }
+foldl (-) (0 - d1) [d2, d3, d4]
+= { por (foldl.2) }
+foldl (-) ((0 - d1) - d2) [d3, d4]
+= { por (foldl.2) }
+foldl (-) (((0 - d1) - d2) - d3) [d4]
+= { por (foldl.2) }
+foldl (-) ((((0 - d1) - d2) - d3) - d4) []
+= { por (foldl.1) }
+(((0 - d1) - d2) - d3) - d4
+
+Sustitución con carnet 19-10054 (d = [0, 0, 5, 4]):
+
+foldl (-) 0 [0, 0, 5, 4]
+= foldl (-) (0 - 0) [0, 5, 4]
+= foldl (-) ((0 - 0) - 0) [5, 4]
+= foldl (-) (((0 - 0) - 0) - 5) [4]
+= foldl (-) ((((0 - 0) - 0) - 5) - 4) []
+= (((0 - 0) - 0) - 5) - 4
+= ((0 - 0) - 5) - 4
+= (0 - 5) - 4
+= -5 - 4
+= -9
+(c) Reducción de miFoldl (-) 0 [d1, d2]
+
+Paso a paso justificando cada paso por ecuación o regla de β-reducción:
+
+miFoldl (-) 0 [d1, d2]
+
+= { por definición de miFoldl }
+foldr (\x k acc -> k (acc - x)) id [d1, d2] 0
+
+= { por (foldr.2) sobre la cabeza d1 y resto [d2] }
+((\x k acc -> k (acc - x)) d1 (foldr (\x k acc -> k (acc - x)) id [d2])) 0
+
+= { por β-reducción aplicando el argumento d1 a (\x -> ...) }
+((\k acc -> k (acc - d1)) (foldr (\x k acc -> k (acc - x)) id [d2])) 0
+
+= { por β-reducción aplicando el argumento (foldr ...) a (\k -> ...) }
+(\acc -> (foldr (\x k acc' -> k (acc' - x)) id [d2]) (acc - d1)) 0
+
+= { por β-reducción aplicando el argumento 0 a (\acc -> ...) }
+(foldr (\x k acc' -> k (acc' - x)) id [d2]) (0 - d1)
+
+= { por (foldr.2) sobre la cabeza d2 y resto [] }
+((\x k acc' -> k (acc' - x)) d2 (foldr (\x k acc' -> k (acc' - x)) id [])) (0 - d1)
+
+= { por β-reducción aplicando el argumento d2 a (\x -> ...) }
+((\k acc' -> k (acc' - d2)) (foldr (\x k acc' -> k (acc' - x)) id [])) (0 - d1)
+
+= { por (foldr.1) sobre la lista vacía: foldr ... id [] = id }
+((\k acc' -> k (acc' - d2)) id) (0 - d1)
+
+= { por β-reducción aplicando el argumento id a (\k -> ...) }
+(\acc' -> id (acc' - d2)) (0 - d1)
+
+= { por β-reducción aplicando el argumento (0 - d1) a (\acc' -> ...) }
+id ((0 - d1) - d2)
+
+= { por definición de id (id.1) }
+(0 - d1) - d2
+
+Sustitución con carnet 19-10054 (d1 = 0, d2 = 0):
+= (0 - 0) - 0
+= 0 - 0
+= 0
+(d) Explicación de la diferencia y condición de igualdad
+
+foldr y foldl producen resultados distintos porque tienen asociatividades
+opuestas: foldr asocia a la derecha, agrupando los paréntesis como
+d1 - (d2 - (d3 - (d4 - 0))), mientras que foldl asocia a la izquierda,
+agrupando como (((0 - d1) - d2) - d3) - d4. Puesto que la resta (-) no es una
+operación asociativa ((x - y) - z /= x - (y - z)), el cambio en el orden de
+evaluación altera el valor final.
+
+Para garantizar que foldr op z xs == foldl op z xs para cualquier lista
+finita xs, se deben cumplir dos condiciones:
+
+    Asociatividad: la operación op debe ser asociativa, es decir:
+
+    (x op y) op w == x op (y op w)   para todo x, y, w.
+
+    Elemento neutro: el valor inicial z debe ser neutro tanto por la
+    izquierda como por la derecha para la operación op:
+    z op x == x   y   x op z == x        para todo x.
+    En términos algebraicos, esto equivale a que la estructura formada por el
+    tipo de los elementos, la operación binaria op y el elemento neutro z
+    constituya un monoide (por ejemplo, (+) con 0, (*) con 1, o (++) con []).
+    =====================================================================
